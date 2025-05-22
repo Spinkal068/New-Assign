@@ -1,0 +1,607 @@
+Application analytics
+Application analytics KPI
+User analytics
+User funel in analytics 
+
+
+User funel in analytics 
+
+A user funnel in analytics represents the steps a user takes to complete a specific goal in your application—such as signing up, making a purchase, or completing onboarding. It helps you visualize where users drop off and how to improve conversion rates.
+
+Example: Sign-Up Funnel in an App
+Funnel Step	Drop-off Analysis
+1. App Opened	100%
+2. Clicked “Sign Up”	70% – Some users don’t proceed
+3. Filled Sign-Up Form	50% – Form complexity may be an issue
+4. Verified Email	30% – Users not completing verification
+
+
+Application analytics KPI
+
+1. User Engagement KPIs
+
+Daily Active Users (DAU)
+
+Monthly Active Users (MAU)
+
+Session Duration – Average time a user spends per session
+
+Session Frequency – How often users return
+
+Retention Rate – % of users who return after a period (e.g., Day 1, Day 7)
+
+
+
+Product or App Analytics Dashboard
+
+
+
+
+You Can Visualize:
+DAU & MAU Trendlines (using last_active_date)
+
+User Funnel (signup → first session → premium upgrade)
+
+Session Duration & Engagement (average per user)
+
+Premium vs Free Users
+
+Device Type or Country Breakdown
+
+User Retention by Week or Month
+
+Source-wise User Acquisition
+
+
+
+
+/**************************************************************************************************************************************************/
+
+
+Key KPIs to Display
+These should be placed as summary cards or KPIs on top of the dashboard:
+
+Total Users
+
+Count of user_id
+
+Active Users (Monthly or Daily)
+
+Users with recent last_active_date in the selected month/day.
+
+Average Session Duration
+
+Average of avg_session_duration (min)
+
+Total Sessions
+
+Sum of session_count
+
+Premium User %
+
+% of users where is_premium = TRUE
+
+Retention Rate
+
+Users who signed up in one period and are still active in a later period.
+
+Top Referral Source
+
+Referral with the highest count.
+
+Device Usage Share
+
+Share of device_type used (Mobile, Web, Tablet).
+
+📊 Charts to Include
+1. 📈 Monthly Signup Trend
+Chart Type: Line Chart
+
+X-axis: signup_date (month/year)
+
+Y-axis: Count of user_id
+
+2. 📈 Active Users Trend
+Chart Type: Line Chart
+
+X-axis: last_active_date (month/year)
+
+Y-axis: Count of user_id
+
+3. 🧭 Average Session Duration by Country
+Chart Type: Bar Chart
+
+X-axis: country
+
+Y-axis: Average of avg_session_duration (min)
+
+4. 📊 Session Count Distribution
+Chart Type: Histogram
+
+X-axis: session_count
+
+Y-axis: Number of users
+
+5. 🧮 Premium vs Non-Premium Users
+Chart Type: Donut/Pie Chart
+
+Legend: is_premium
+
+Value: Count of user_id
+
+6. 🌍 Users by Country
+Chart Type: Column or Map Chart
+
+X-axis: country
+
+Y-axis: Count of user_id
+
+7. 🖥️ Device Type Breakdown
+Chart Type: Pie Chart
+
+Legend: device_type
+
+Value: Count of user_id
+
+8. 🔁 Referral Source Contribution
+Chart Type: Bar or Pie Chart
+
+X-axis: referral_source
+
+Y-axis: Count of users
+
+💡 Optional Advanced Visuals
+9. 📅 Cohort Analysis Table (Signup Month vs Retention Month)
+You can build a matrix where:
+
+Rows: signup_date (month)
+
+Columns: Active months
+
+Values: % of retained users
+
+10. 📐 Correlation between Session Count and Duration
+Chart Type: Scatter Plot
+
+X-axis: session_count
+
+Y-axis: avg_session_duration (min)
+
+Each point = 1 user
+
+
+/***************************************************************************************************************************************************/
+
+
+
+
+
+
+🔹 Basic Level
+1. What is user analytics?
+Answer:
+User analytics is the process of collecting, analyzing, and interpreting user behavior data to improve product experience, drive engagement, and boost conversions. It tracks metrics like user sessions, funnels, retention, churn, and more.
+
+2. What tools do you use for user analytics?
+Answer:
+Tools like:
+
+Google Analytics / GA4
+
+Mixpanel
+
+Amplitude
+
+Hotjar / Crazy Egg
+
+Power BI / Tableau
+
+SQL for custom queries
+
+Excel/Python for ad hoc analysis
+
+3. What are KPIs for user engagement?
+Answer:
+Key KPIs include:
+
+Daily/Monthly Active Users (DAU/MAU)
+
+Session Duration
+
+Retention Rate
+
+Churn Rate
+
+Conversion Rate
+
+Click-Through Rate (CTR)
+
+4. What’s a user funnel and why is it important?
+Answer:
+A user funnel shows how users progress through steps (e.g., sign-up → onboarding → purchase). It identifies drop-offs and helps optimize conversion paths.
+
+🔹 Intermediate Level
+5. How do you track user retention?
+Answer:
+By calculating the % of users who return on Day 1, 7, 30, etc. (cohort analysis). Tools like Mixpanel and Amplitude offer built-in retention analysis.
+
+6. Explain cohort analysis.
+Answer:
+Cohort analysis groups users based on shared attributes (like signup date) and tracks how behavior (like activity or purchase) changes over time.
+
+7. How would you find why users drop off after onboarding?
+Answer:
+
+Analyze funnel drop-off at onboarding steps
+
+Use session recordings (Hotjar)
+
+Run user surveys or feedback
+
+Compare successful vs unsuccessful user paths
+
+A/B test changes to onboarding flow
+
+8. What SQL query would you use to find daily active users?
+Answer:
+
+sql
+Copy
+Edit
+SELECT 
+  event_date, 
+  COUNT(DISTINCT user_id) AS daily_active_users
+FROM 
+  user_events
+GROUP BY 
+  event_date
+ORDER BY 
+  event_date;
+🔹 Advanced Level
+9. How do you measure feature adoption?
+Answer:
+
+Define feature use event (e.g., "clicked X")
+
+Track unique users triggering the event
+
+Calculate adoption = (users using feature / eligible users) × 100
+
+Use cohort and time-series analysis to see trends
+
+10. How would you identify power users?
+Answer:
+
+Users with high frequency, volume, and depth of engagement
+
+Use metrics like:
+
+of sessions per week
+of key actions taken
+Time spent per session
+
+Segment users using RFM (Recency, Frequency, Monetary) models
+
+11. How do you ensure data quality in analytics?
+Answer:
+
+Implement event validation (e.g., schema enforcement)
+
+Remove bots/test traffic
+
+Monitor for anomalies or data gaps
+
+Set up automated data QA checks
+
+Collaborate with engineering on tracking plans
+
+12. Explain the difference between GA4 and Universal Analytics.
+Answer:
+
+GA4 is event-based (vs. session-based in UA)
+
+Tracks users across platforms (web + app)
+
+Built-in machine learning for predictions
+
+Uses BigQuery integration for raw data access
+
+No bounce rate (uses engagement metrics instead)
+
+13. How do you segment users effectively?
+Answer:
+
+Based on behavior (e.g., frequency of use)
+
+Demographics (location, device)
+
+Lifecycle stage (new, returning, dormant)
+
+Campaign source (organic, paid, referral)
+
+🔹 Bonus: Scenario-Based
+14. You notice a drop in retention—what’s your approach?
+Answer:
+
+Segment affected users (time, device, campaign)
+
+Review recent product changes/releases
+
+Analyze user feedback/surveys
+
+Watch session replays
+
+Test retention-boosting features (e.g., notifications, onboarding tweaks)
+
+15. What’s your process to track a new feature launch?
+Answer:
+
+Define success KPIs
+
+Instrument tracking events (with dev team)
+
+Build funnel + retention dashboards
+
+Monitor adoption, engagement, feedback
+
+Compare new vs old behavior
+
+
+
+16. What is the difference between tracking events and pageviews?
+Answer:
+
+Pageviews: Count how often a page is loaded (used in web analytics).
+
+Events: Track specific user actions (e.g., clicks, video plays, downloads).
+
+Example: Clicking "Sign Up" is an event, viewing the signup page is a pageview.
+
+17. How do you build a behavioral segmentation model?
+Answer:
+
+Identify key user behaviors (e.g., frequency, recency, actions).
+
+Use clustering (e.g., K-means) or RFM analysis.
+
+Segment users (e.g., loyal, dormant, casual).
+
+Apply segmentation in marketing or UX improvements.
+
+18. How do you calculate churn rate?
+Answer:
+
+sql
+Copy
+Edit
+Churn Rate = (Users Lost During Period / Total Users at Start of Period) * 100
+Example:
+
+Start: 1000 users
+
+Lost: 100
+
+Churn Rate = 10%
+
+19. What is attribution modeling?
+Answer:
+Attribution modeling assigns credit for conversions to different marketing channels (e.g., email, ads, organic search).
+
+Types:
+
+First Touch
+
+Last Touch
+
+Linear
+
+Time Decay
+
+Data-Driven (GA4 / ML-based)
+
+20. How do you calculate customer lifetime value (CLV)?
+Answer:
+
+ini
+Copy
+Edit
+CLV = (Average Purchase Value) × (Purchase Frequency) × (Customer Lifespan)
+Helps predict total revenue from a user over their relationship with the product.
+
+🔹 Product & Business Questions
+21. How do you measure product stickiness?
+Answer:
+
+ini
+Copy
+Edit
+Stickiness = Daily Active Users / Monthly Active Users (DAU/MAU Ratio)
+A higher ratio (~20–30%) indicates better engagement.
+
+22. How do you prioritize analytics requests from different teams?
+Answer:
+
+Evaluate business impact and urgency
+
+Align with company OKRs
+
+Use RICE or ICE scoring models
+
+Communicate timelines transparently
+
+23. What is a North Star Metric and how do you define one?
+Answer:
+A single metric that best captures the core value your product delivers.
+Example:
+
+Spotify: Time spent listening
+
+Airbnb: Nights booked
+
+WhatsApp: Messages sent
+
+24. How do you evaluate a feature's impact after release?
+Answer:
+
+Define KPIs pre-launch.
+
+Use A/B testing or pre-post analysis.
+
+Analyze engagement, retention, conversions.
+
+Compare with baseline metrics or control group.
+
+25. What’s the difference between correlation and causation in analytics?
+Answer:
+
+Correlation: Two metrics move together (may be coincidental).
+
+Causation: One metric directly causes change in another.
+
+Example:
+
+Ice cream sales and drowning deaths are correlated (summer), but one doesn’t cause the other.
+
+🔹 Tool-Specific Questions
+26. How do you set up event tracking in Google Analytics 4?
+Answer:
+
+Use Google Tag Manager or gtag.js
+
+Define parameters: event_name, event_category, event_label
+
+Track using custom events or Enhanced Measurement features
+
+27. What are some differences between Mixpanel and GA4?
+Answer:
+
+Feature	GA4	Mixpanel
+Model	Event-based	Event-based
+Customization	Moderate	Highly flexible
+Funnels	Limited	Real-time & retroactive
+Retention	Basic	Advanced with cohorts
+UI	Broad usage (marketing)	Deeper for product teams
+
+28. How do you create a dashboard in Power BI for user retention?
+Answer:
+
+Import user event data
+
+Create a retention table using DAX or calculated measures
+
+Use line charts or matrix tables
+
+Add filters for cohort, date, platform, etc.
+
+29. How do you handle missing or inconsistent data in analytics?
+Answer:
+
+Apply data cleaning (null handling, deduplication)
+
+Use fallback default values
+
+Build alerts for anomalies
+
+Collaborate with engineering to fix tracking issues
+
+Document assumptions
+
+30. How do you prevent double-counting users?
+Answer:
+
+Use unique user identifiers
+
+Apply deduplication logic on session/user level
+
+Leverage userId/deviceId instead of cookies (which can be inconsistent)
+
+Merge anonymous and logged-in data with identity resolution techniques
+
+✅ Bonus: Real-World Scenarios
+31. A new campaign drives traffic, but conversions drop — what’s your approach?
+Answer:
+
+Compare bounce rate and session duration
+
+Analyze funnel drop-offs
+
+Check campaign targeting for mismatch
+
+Look at device/browser compatibility issues
+
+Use heatmaps/session recordings
+
+32. How would you onboard a new product manager to your analytics system?
+Answer:
+
+Give a walkthrough of existing dashboards & KPIs
+
+Share tracking plan/event dictionary
+
+Explain key tools (GA4, Amplitude, SQL)
+
+Set up access + training
+
+Document data limitations
+
+33. How do you validate that your funnel is working correctly?
+Answer:
+
+QA events from dev console or tag manager
+
+Use test users to trigger steps
+
+Cross-validate counts in SQL vs. UI tools
+
+Check funnel consistency across date ranges and user segments
+
+
+
+
+
+
+Retention Rate (%) = 
+VAR SelectedMonth1 = SELECTEDVALUE(Sheet1[Signup Month])
+VAR TotalSignups = 
+    CALCULATE(
+        DISTINCTCOUNT(Sheet1[user_id]),
+        Sheet1[Signup Month] = SelectedMonth1
+    )
+VAR RetainedUsers = 
+    CALCULATE(
+        DISTINCTCOUNT(Sheet1[user_id]),
+        Sheet1[Signup Month] = SelectedMonth1,
+        Sheet1[Last Active Month] > SelectedMonth1
+    )
+RETURN
+DIVIDE(RetainedUsers, TotalSignups, 0) * 100
+
+
+Total Users = 
+CALCULATE(
+    DISTINCTCOUNT(Sheet1[user_id]),
+    FILTER(
+        Sheet1,
+        FORMAT(Sheet1[signup_date], "YYYY-MM") <= SELECTEDVALUE(DateTable[Month_Year])
+    )
+)
+
+
+Churned Users = 
+CALCULATE(
+    DISTINCTCOUNT(Sheet1[user_id]),
+    FILTER(
+        Sheet1,
+        FORMAT(Sheet1[last_active_date], "YYYY-MM") = SELECTEDVALUE(DateTable[Month_Year])
+            && FORMAT(Sheet1[last_active_date], "YYYY-MM") <> FORMAT(Sheet1[signup_date], "YYYY-MM")
+    )
+)
+
+
+Churn Rate % = 
+DIVIDE([Churned Users], [Total Users], 0)
+
+
+
+
+
