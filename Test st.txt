@@ -1,0 +1,565 @@
+
+---
+
+### 🔁 **1–10: Joins & Subqueries**
+
+1. Retrieve the names of employees who earn more than their department’s average salary.
+2. Find customers who placed more than one order in the same month.
+3. Write a query to find all products that have never been ordered.
+4. List employees who have the same job title as someone from a different department.
+5. Find the second highest salary from the employee table.
+6. Get all orders where the order amount is greater than the average order amount for that customer.
+7. Write a query to find users who logged in consecutively for at least 3 days.
+8. Find duplicate records in a table based on multiple columns.
+9. Delete duplicate rows but keep the one with the lowest ID.
+10. Retrieve top 3 highest-paid employees from each department.
+
+---
+
+### 🔍 **11–20: CTEs, Window Functions & Analytics**
+
+11. Use `ROW_NUMBER()` to remove duplicate rows in a table.
+12. Show a running total of sales for each product.
+13. Use a `RANK()` function to rank employees within departments by salary.
+14. Retrieve orders placed by the same user within 10 minutes of each other.
+15. Use a recursive CTE to generate a calendar from 1st Jan 2023 to 31st Dec 2023.
+16. Use `LEAD()` and `LAG()` to find changes in customer purchase behavior.
+17. Identify periods where a stock price increased for 3 or more days consecutively.
+18. Find average salary for each department and show departments whose average is above company average.
+19. Use window functions to calculate a 3-day moving average of sales.
+20. For each customer, find their most recent order and the previous order.
+
+---
+
+### 🛠️ **21–30: Optimization, Case, Set Ops, Aggregation**
+
+21. Compare performance of `EXISTS` vs `IN` for a large dataset.
+22. Find the cumulative number of users who signed up each month.
+23. Use `CASE` to categorize products into price bands (e.g., low, medium, high).
+24. Identify product categories that contributed at least 80% of revenue (Pareto principle).
+25. Write a query to pivot data: convert rows into columns (using `PIVOT` or aggregation).
+26. Use `UNION` to combine results from two different queries and remove duplicates.
+27. Use a correlated subquery to update salary based on department average.
+28. Write a query to find gaps in a sequence of invoice numbers.
+29. Identify customers who bought the same product at two different prices.
+30. Optimize a slow query using indexes and explain how you did it.
+
+---
+
+
+
+1. Retrieve the names of employees who earn more than their department’s average salary.
+
+Select Name from Employee E where salary >( Select Avg(salary) from employees where WHERE DepartmentID = E.DepartmentID )
+
+2. Find customers who placed more than one order in the same month.
+
+Select Eployee_id ,Month , Count(*) as order_id from Customers 
+Group by Eployee_id , Month
+Having Count(*)>1
+
+3. Write a query to find all products that have never been ordered.
+
+SELECT p.Product_id, p.Product_name
+FROM Products p
+LEFT JOIN OrderDetails od ON p.Product_id = od.Product_id
+WHERE od.Product_id IS NULL;
+
+
+Select .Product_id, p.Product_name
+FROM Products p where p.Product_id Not in ( Select od.Product_id
+ from OrderDetails 
+WHERE od.Product_id IS NOT NULL)
+
+4. List employees who have the same job title as someone from a different department.
+
+SELECT DISTINCT e1.EmployeeID, e1.Name, e1.JobTitle, e1.DepartmentID
+FROM Employee e1
+JOIN Employee e2
+  ON e1.JobTitle = e2.JobTitle
+  AND e1.DepartmentID <> e2.DepartmentID;
+
+5. Find the second highest salary from the employee table.
+
+Select max(salary) from employee where salary < (Select max(salary) from employee)
+
+6. Get all orders where the order amount is greater than the average order amount for that customer.
+
+SELECT o.Order_id, o.CustomerID, o.OrderAmount
+FROM Orders o
+WHERE o.OrderAmount > (
+    SELECT AVG(o2.OrderAmount)
+    FROM Orders o2
+    WHERE o2.CustomerID = o.CustomerID
+);
+
+
+7. Write a query to find users who logged in consecutively for at least 3 days.
+
+WITH RankedLogins AS (
+    SELECT 
+        UserID,
+        LoginDate,
+        DATEADD(DAY, -ROW_NUMBER() OVER (PARTITION BY UserID ORDER BY LoginDate), LoginDate) AS GroupKey
+    FROM Logins
+),
+GroupedLogins AS (
+    SELECT 
+        UserID,
+        MIN(LoginDate) AS StartDate,
+        MAX(LoginDate) AS EndDate,
+        COUNT(*) AS ConsecutiveDays
+    FROM RankedLogins
+    GROUP BY UserID, GroupKey
+)
+SELECT UserID, StartDate, EndDate, ConsecutiveDays
+FROM GroupedLogins
+WHERE ConsecutiveDays >= 3;
+
+8. Find duplicate records in a table based on multiple columns.
+
+SELECT FirstName, LastName, Department, COUNT(*) AS DuplicateCount
+FROM Employee
+GROUP BY FirstName, LastName, Department
+HAVING COUNT(*) > 1;
+
+9. Delete duplicate rows but keep the one with the lowest ID.
+
+WITH CTE AS (
+    SELECT *,
+           ROW_NUMBER() OVER (PARTITION BY FirstName, LastName, Department ORDER BY Id) AS rn
+    FROM Employee
+)
+DELETE FROM CTE
+WHERE rn > 1;
+
+---------------For Finding Duplicate row-----
+WITH CTE AS (
+    SELECT *,
+           ROW_NUMBER() OVER (PARTITION BY FirstName, LastName, Department ORDER BY Id) AS rn
+    FROM Employee
+)
+Select * FROM CTE
+WHERE rn > 1;
+
+10. Retrieve top 3 highest-paid employees from each department.
+
+WITH RankedSalaries AS (
+    SELECT *,
+           ROW_NUMBER() OVER (PARTITION BY Department ORDER BY Salary DESC) AS rn
+    FROM Employee
+)
+SELECT *
+FROM RankedSalaries
+WHERE rn <= 3;
+
+
+11. Use `ROW_NUMBER()` to remove duplicate rows in a table.
+
+WITH CTE AS (
+    SELECT *,
+           ROW_NUMBER() OVER (
+               PARTITION BY FirstName, LastName, Department
+               ORDER BY Id
+           ) AS rn
+    FROM Employee
+)
+DELETE FROM CTE
+WHERE rn > 1;
+
+12. Show a running total of sales for each product. (rung as time )
+
+SELECT 
+    Product_id,
+    Sale_Date,
+    Sales,
+    SUM(Sales) OVER (
+        PARTITION BY Product_id 
+        ORDER BY Sale_Date
+        ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW
+    ) AS RunningTotal
+FROM Sales_data;
+
+13. Use a `RANK()` function to rank employees within departments by salary.
+
+SELECT 
+    Employee,
+    Department,
+    Salary,
+    RANK() OVER (PARTITION BY Department ORDER BY Salary DESC) AS rk
+FROM Employee;
+
+14. Retrieve orders placed by the same user within 10 minutes of each other.
+
+WITH OrderPairs AS (
+    SELECT 
+        OrderID,
+        UserID,
+        OrderDateTime,
+        LAG(OrderDateTime) OVER (PARTITION BY UserID ORDER BY OrderDateTime) AS PrevOrderTime
+    FROM Orders
+)
+SELECT *
+FROM OrderPairs
+WHERE 
+    PrevOrderTime IS NOT NULL AND
+    TIMESTAMPDIFF(MINUTE, PrevOrderTime, OrderDateTime) <= 10;
+
+15. Use a recursive CTE to generate a calendar from 1st Jan 2023 to 31st Dec 2023.
+
+WITH Calendar AS (
+    SELECT CAST('2023-01-01' AS DATE) AS CalendarDate
+    UNION ALL
+    SELECT DATEADD(DAY, 1, CalendarDate)
+    FROM Calendar
+    WHERE CalendarDate < '2023-12-31'
+)
+SELECT *
+FROM Calendar
+OPTION (MAXRECURSION 365);  -- SQL Server only
+
+
+16. Use `LEAD()` and `LAG()` to find changes in customer purchase behavior.
+
+SELECT 
+    CustomerID,
+    PurchaseDate,
+    Category,
+    Amount,
+    LAG(Category) OVER (PARTITION BY CustomerID ORDER BY PurchaseDate) AS PrevCategory,
+    LAG(Amount) OVER (PARTITION BY CustomerID ORDER BY PurchaseDate) AS PrevAmount,
+    LEAD(Category) OVER (PARTITION BY CustomerID ORDER BY PurchaseDate) AS NextCategory,
+    LEAD(Amount) OVER (PARTITION BY CustomerID ORDER BY PurchaseDate) AS NextAmount
+FROM Purchases;
+
+
+17. Identify periods where a stock price increased for 3 or more days consecutively.
+
+18. Find average salary for each department and show departments whose average is above company average.
+
+SELECT department_id, AVG(salary) AS avg_department_salary
+FROM employees
+GROUP BY department_id
+HAVING AVG(salary) > (
+    SELECT AVG(salary)
+    FROM employees
+);
+
+19. Use window functions to calculate a 3-day moving average of sales.
+
+SELECT 
+    sale_date,
+    product_id,
+    sales_amount,
+    AVG(sales_amount) OVER (
+        PARTITION BY product_id
+        ORDER BY sale_date
+        ROWS BETWEEN 2 PRECEDING AND CURRENT ROW
+    ) AS moving_avg_3_day
+FROM sales;
+
+20. For each customer, find their most recent order and the previous order.
+
+WITH ranked_orders AS (
+    SELECT 
+        customer_id,
+        order_id,
+        order_date,
+        ROW_NUMBER() OVER (PARTITION BY customer_id ORDER BY order_date DESC) AS rn
+    FROM orders
+)
+SELECT *
+FROM ranked_orders
+WHERE rn <= 2
+ORDER BY customer_id, rn;
+
+21. Compare performance of `EXISTS` vs `IN` for a large dataset.
+
+SELECT *
+FROM employees
+WHERE department_id IN (
+    SELECT department_id
+    FROM departments
+    WHERE location = 'New York'
+);
+
+SELECT *
+FROM employees e
+WHERE EXISTS (
+    SELECT 1
+    FROM departments d
+    WHERE d.department_id = e.department_id
+      AND d.location = 'New York'
+);
+
+| Factor                | `IN`                                                            | `EXISTS`                                                                   |
+| --------------------- | --------------------------------------------------------------- | -------------------------------------------------------------------------- |
+| **Execution**         | Evaluates all values from subquery before filtering.            | Evaluates row-by-row and exits early if a match is found.                  |
+| **Duplicates**        | Can be impacted by duplicates.                                  | Ignores duplicates (just checks if at least one row exists).               |
+| **NULL behavior**     | Returns **no rows** if subquery contains NULLs (non-intuitive). | Not affected by NULLs in subquery.                                         |
+| **Large Outer Table** | Performs **better** when the subquery result is small.          | Performs **better** when the subquery is large and outer query is smaller. |
+| **Index Usage**       | Might not leverage indexes well with large `IN` lists.          | Often more index-friendly due to join-like behavior.                       |
+
+
+22. Find the cumulative number of users who signed up each month.
+
+SELECT 
+    DATE_TRUNC('month', signup_date) AS signup_month,
+    COUNT(user_id) AS monthly_signups,
+    SUM(COUNT(user_id)) OVER (
+        ORDER BY DATE_TRUNC('month', signup_date)
+    ) AS cumulative_signups
+FROM users
+GROUP BY DATE_TRUNC('month', signup_date)
+ORDER BY signup_month;
+
+
+23. Use CASE to categorize products into price bands (e.g., low, medium, high).
+
+SELECT 
+    product_id,
+    product_name,
+    price,
+    CASE 
+        WHEN price < 100 THEN 'Low'
+        WHEN price BETWEEN 100 AND 500 THEN 'Medium'
+        WHEN price > 500 THEN 'High'
+        ELSE 'Unknown'
+    END AS price_band
+FROM products;
+
+
+
+
+25. Write a query to pivot data: convert rows into columns (using `PIVOT` or aggregation).
+
+SELECT *
+FROM (
+    SELECT product, region, revenue
+    FROM sales
+) AS src
+PIVOT (
+    SUM(revenue)
+    FOR region IN ([North], [South], [East], [West])
+) AS pvt;
+
+
+/*************************************************************************************************************************************************/
+
+✅ Basic DAX Questions (Write the DAX)
+Write a DAX measure to calculate total sales from a column named SalesAmount.
+Toatl_Sales= Sum('Sales'[SalesAmount])
+
+Create a calculated column to categorize products as "Cheap" if price < 100, otherwise "Expensive".
+categorize products= If ('Sales'[Price]<100,"Cheap","Expensive")
+
+Write a DAX formula to count the number of rows in the Orders table.
+total_Row= Countrows('Orders table')
+
+Create a measure to calculate the average discount given.
+Average_Discount = AVERAGE('Sales'[Discount])
+
+
+Write a measure to calculate total quantity sold for a selected product.
+Total_quantity= Sum('Product'[Quantity])
+
+Write a DAX formula to calculate profit using SalesAmount - Cost.
+
+Create a measure to count distinct customers.
+
+Write a DAX formula to return the maximum order value from the Orders table.
+
+Use IF to check whether sales exceeded a target of 100,000 and return "Target Met" or "Target Missed".
+
+Create a calculated column to extract year from an OrderDate column.
+
+✅ Intermediate DAX Questions (Write the DAX)
+Write a measure to calculate YTD sales using the SalesAmount column.
+
+Create a running total of SalesAmount sorted by OrderDate.
+
+Write a DAX measure to calculate previous month's sales.
+
+Use CALCULATE to get total sales only for the "Electronics" category.
+
+Write a measure to return the difference between current and previous month sales.
+
+Create a dynamic measure that returns sales if category is selected, otherwise returns blank.
+
+Write a DAX formula to calculate the total sales for the top 5 products by revenue.
+
+Create a DAX formula to filter out weekends from the date table.
+
+Write a measure that returns "High", "Medium", or "Low" based on sales thresholds.
+
+Calculate the percentage of total sales for each region.
+
+✅ Advanced DAX Questions (Write the DAX)
+Write a measure that ranks products by sales within each category.
+
+Create a measure that returns sales amount ignoring slicer selection on Region.
+
+Write a measure that dynamically changes between YTD, MTD, and QTD, based on slicer selection.
+
+Calculate moving average over the last 3 months of SalesAmount.
+
+Write a DAX measure to get the most recent transaction date per customer.
+
+Write a DAX formula to count active customers as of a selected date.
+
+Create a measure that returns the cumulative number of new customers month by month.
+
+Write a measure that shows sales only if the user selects a single category.
+
+Build a DAX measure to show the variance between actual and budgeted sales.
+
+Use DAX to calculate churn rate (customers who purchased in last month but not in current month).
+
+
+
+/*********************************************************************************************************/
+ID	Date	product
+1	5	ABC
+1	6	RED
+2	6	Def
+2	7	GHI
+3	8	ABC
+3	1	jkl
+4	2	ABC
+4	3	DEF
+5	4	GHI
+5	5	QRE
+6	5	REF
+7	5	ADS
+8	5	TRE
+ID	Date	product
+1	5	ABC
+2	6	Def
+3	1	jkl
+4	2	ABC
+5	4	GHI
+Write a query 
+
+1st entry is on 1st may, 2nd entry is on 6th may.....now i want 2nd last entry of the month
+
+Solutions -----
+
+SELECT *
+FROM Products
+WHERE Date = (
+    SELECT DISTINCT Date
+    FROM Products
+    ORDER BY Date DESC
+    LIMIT 1 OFFSET 1
+);
+
+SELECT ID, Date, product
+FROM Products t1
+WHERE (
+    SELECT COUNT(DISTINCT t2.Date)
+    FROM Products t2
+    WHERE t2.Date > t1.Date
+) = 1;
+
+SELECT *
+FROM (
+    SELECT *, 
+           Rank() OVER (ORDER BY Date DESC) AS rnk
+    FROM Products
+) ranked
+WHERE rnk = 2;
+
+
+2. "Write a SQL for those IDs who have more than 1 entry"
+
+SELECT ID
+FROM Products
+GROUP BY ID
+HAVING COUNT(*) > 1;
+
+3. "Write a DAX for a count where product is ABC"
+
+Count_ABC = CALCULATE(COUNTROWS('Table'), 'Table'[Product] = "ABC")
+
+4. "Explain DAX query, types of relationships, native query"
+🔹 DAX Query:
+A DAX query is written to extract and summarize data from a Power BI model using Data Analysis Expressions (DAX).
+
+🔹 Types of Relationships:
+One-to-Many (1:*)
+One-to-One (1:1)
+
+Many-to-One (*:1)
+
+Many-to-Many (:)
+
+Each defines how tables relate in the model for filters and calculations.
+
+🔹 Native Query:
+A native query is the actual SQL query sent to the database by Power BI (can be viewed in Power Query > Advanced Editor).
+
+
+A native query refers to a raw SQL query that is written in the SQL dialect of the underlying database and executed directly on the database engine.
+
+It’s different from queries written in ORM query languages (like JPQL in Java Hibernate or LINQ in .NET), which are abstracted from the database.
+
+Native queries give you full control over the SQL, letting you use database-specific functions and optimizations.
+
+✅ 5. "Data optimization, Drop table, RANK function, ROW NO., FILTER functions, DAX Queries"
+🔹 Key Concepts:
+Data Optimization: Techniques to improve performance (e.g., indexing, filtering in source, aggregations).
+
+DROP TABLE: Deletes a table from DB.
+
+sql
+Copy
+Edit
+DROP TABLE table_name;
+RANK(): Assigns rank to rows with ties.
+
+ROW_NUMBER(): Assigns unique row numbers.
+
+FILTER() (DAX): Filters a table expression.
+
+DAX
+Copy
+Edit
+FILTER(Table, Table[Column] > 10)
+✅ 6. "Joins, types of joins, difference between HAVING and WHERE?"
+🔹 Joins:
+INNER JOIN: Matches only matching rows
+
+LEFT JOIN: All from left, matched from right
+
+RIGHT JOIN: All from right, matched from left
+
+FULL OUTER JOIN: All from both sides
+
+🔹 HAVING vs WHERE:
+WHERE filters rows before grouping.
+
+HAVING filters groups after aggregation.
+
+✅ 7. "Use COUNT or COUNTIF"
+🔹 SQL:
+COUNT(*): Count all rows
+
+COUNT(column): Count non-null values in column
+
+🔹 DAX:
+COUNTROWS(FILTER(...)) → Equivalent of COUNTIF.
+
+DAX
+Copy
+Edit
+Count_IF_ABC = COUNTROWS(FILTER('Table', 'Table'[Product] = "ABC"))
+
+
+
+
+
+Feature	WHERE	HAVING
+Filters on	Individual rows	Aggregated (grouped) data
+When it runs	Before aggregation	After aggregation
+Aggregate usage	❌ Cannot use aggregate functions	✅ Can use aggregate functions
+Commonly used with	SELECT, UPDATE, DELETE	SELECT with GROUP BY
